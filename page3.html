@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단기 현장실습 참여 자격 자가진단</title>
+    <style>
+        /* [공통 스타일] 4+1, 학기대체와 동일한 테마 적용 */
+        :root {
+            /* 메인 컬러: 짙은 네이비 */
+            --primary-blue: #0E4A84; 
+            --light-blue: #E3F2FD; 
+            --dark-blue: #083660; 
+            --success-green: #2E7D32;
+            --fail-red: #C62828;
+            --gray-btn: #757575;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: var(--primary-blue);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+            word-break: keep-all;
+            border-bottom: 3px solid var(--primary-blue);
+            padding-bottom: 15px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: var(--success-green);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Question Card */
+        .question-card {
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .question-card.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--dark-blue);
+            margin-bottom: 20px;
+            word-break: keep-all;
+        }
+
+        .note-text {
+            font-size: 0.95rem;
+            color: #666;
+            background-color: var(--light-blue);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            display: inline-block;
+            width: 90%;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+
+        .btn-yes {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+        .btn-yes:hover { background-color: var(--dark-blue); }
+
+        .btn-no {
+            background-color: #E0E0E0;
+            color: #333;
+        }
+        .btn-no:hover { background-color: #BDBDBD; }
+
+        /* Navigation (Previous Button) */
+        .nav-area {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .btn-prev {
+            background-color: transparent;
+            color: var(--gray-btn);
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+        .btn-prev:hover {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        /* Result Styles */
+        .result-box {
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .result-success {
+            background-color: #e8f5e9;
+            border: 2px solid var(--success-green);
+            color: #2e7d32;
+        }
+        .result-fail {
+            background-color: #ffebee;
+            border: 2px solid var(--fail-red);
+            color: #c62828;
+        }
+        .result-title {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .result-desc {
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        .btn-restart {
+            background-color: #555;
+            color: white;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>💙 단기 현장실습 참여 자격 자가진단</h1>
+    
+    <div class="progress-container">
+        <div id="progressBar" class="progress-bar"></div>
+    </div>
+
+    <div id="questionContainer">
+        </div>
+
+    <div class="nav-area">
+        <button id="prevBtn" class="btn-prev" onclick="goBack()" style="display:none;">◀ 이전 단계</button>
+    </div>
+</div>
+
+<script>
+    // [설정] 질문 및 로직 데이터
+    const flowData = {
+        q1: {
+            text: "한양대학교 서울캠퍼스 소속 학생이신가요?",
+            note: "참고: ERICA 소속은 ERICA 현장실습에 참여해야 합니다.",
+            yes: "q2",
+            no: "R_FAIL_CAMPUS"
+        },
+        q2: {
+            text: "현재 학부생 신분인가요?",
+            note: "졸업생, 대학원생은 참여할 수 없습니다.",
+            yes: "q3",
+            no: "R_FAIL_STATUS"
+        },
+        q3: {
+            text: "신입학생인가요, 편입생인가요?",
+            // 버튼 텍스트 커스텀
+            yesLabel: "편입생",
+            noLabel: "신입학생",
+            yes: "q5", // 편입생 -> 1학기 체크
+            no: "q4"  // 신입생 -> 4학기 체크
+        },
+        q4: { // 신입생 경로
+            text: "4학기 이상 이수했거나 이수 예정인가요?",
+            yes: "q6",
+            no: "R_FAIL_SEM_4"
+        },
+        q5: { // 편입생 경로
+            text: "1학기 이상 이수했거나 이수 예정인가요?",
+            yes: "q6",
+            no: "R_FAIL_SEM_1"
+        },
+        q6: {
+            text: "정규 학기 내에 참여하는 학생인가요?",
+            note: "참고: 신입학생 8학기, 편입생 4~6학기 이내",
+            yes: "q10", // 정규학기 -> 이력체크
+            no: "q7"   // 추가학기/수료 -> 졸업요건 체크
+        },
+        q7: {
+            text: "졸업 요건을 모두 충족하였는가?",
+            yes: "q9", // 충족 -> 유예 여부 체크
+            no: "q8"   // 미충족 -> 세부 확인
+        },
+        q8: {
+            text: "다른 요건을 모두 충족하고 졸업논문/대체과제만 남아있는 학생인가요?",
+            yes: "R_FAIL_COMPLETION", // 수료예정자(학점취득불가)
+            no: "q10" // 아직 요건 남음 -> 참여 가능성 있음 (이력체크로 이동)
+        },
+        q9: {
+            text: "학사학위취득유예를 신청했거나 신청 예정인가요?",
+            note: "참고: 단기+장기 연계 현장실습의 경우 '수강신청(유)' 선택 필수",
+            yes: "q10",
+            no: "q10"
+        },
+        q10: {
+            text: "과거에 현장실습에 참여한 이력이 있나요?",
+            yes: "q11", // 이력 있음 -> 학점 체크
+            no: "R_SUCCESS" // 이력 없음 -> 바로 통과
+        },
+        q11: {
+            text: "현장실습으로 취득한 총 학점이 18학점 미만인가요?",
+            note: "참고: 4+1학기제 현장실습으로 취득한 학점 제외",
+            yes: "R_SUCCESS", // 18학점 미만 -> 참여 가능
+            no: "R_FAIL_CREDIT" // 18학점 이상 -> 참여 불가
+        }
+    };
+
+    // [설정] 결과 데이터
+    const results = {
+        R_FAIL_CAMPUS: { 
+            title: "🚨 참여 불가: 소속 미충족", 
+            desc: "이 프로그램은 한양대학교 서울캠퍼스 소속 학생을 대상으로 합니다.", 
+            type: "fail" 
+        },
+        R_FAIL_STATUS: { 
+            title: "🚨 참여 불가: 신분 미충족", 
+            desc: "학부생 신분만 참여 가능합니다.<br>(졸업생, 대학원생 불가)", 
+            type: "fail" 
+        },
+        R_FAIL_SEM_4: { 
+            title: "🚨 참여 불가: 이수 학기 미달", 
+            desc: "신입생은 4학기 이상 이수(또는 예정)이어야 참여 가능합니다.", 
+            type: "fail" 
+        },
+        R_FAIL_SEM_1: { 
+            title: "🚨 참여 불가: 이수 학기 미달", 
+            desc: "편입생은 1학기 이상 이수(또는 예정)이어야 참여 가능합니다.", 
+            type: "fail" 
+        },
+        R_FAIL_COMPLETION: { 
+            title: "🚨 참여 불가: 수료/졸업 예정", 
+            desc: "졸업논문/대체과제만 남겨둔 수료예정자는<br>학점 취득이 불가능하여 참여할 수 없습니다.", 
+            type: "fail" 
+        },
+        R_FAIL_CREDIT: { 
+            title: "🚨 참여 불가: 학점 초과", 
+            desc: "현장실습으로 인정 가능한 최대 학점(18학점)을 이미 초과했습니다.", 
+            type: "fail" 
+        },
+        R_SUCCESS: { 
+            title: "🎉 참여 가능!", 
+            desc: "단기 현장실습 참여 자격을 충족하셨습니다!<br>자세한 절차는 학교 현장실습 담당 부서에 문의해 주세요.", 
+            type: "success" 
+        }
+    };
+
+    // [시스템] 상태 관리 및 렌더링 함수
+    let historyStack = []; 
+    let currentId = 'q1';
+
+    const questionContainer = document.getElementById('questionContainer');
+    const prevBtn = document.getElementById('prevBtn');
+    const progressBar = document.getElementById('progressBar');
+    const TOTAL_STEPS = 11; // 전체 질문 수
+
+    function init() {
+        renderStep('q1');
+    }
+
+    function renderStep(id) {
+        currentId = id;
+        questionContainer.innerHTML = ''; 
+        
+        // 진행률 계산
+        const qNum = parseInt(id.replace('q', '')) || TOTAL_STEPS;
+        const progress = Math.min((qNum / TOTAL_STEPS) * 100, 100);
+        
+        if (id.startsWith('R_')) {
+            // 결과 화면
+            renderResult(id);
+            progressBar.style.width = '100%';
+            prevBtn.style.display = 'block'; 
+        } else {
+            // 질문 화면
+            const data = flowData[id];
+            
+            const card = document.createElement('div');
+            card.className = 'question-card active';
+            
+            // 참고 문구
+            const noteHtml = data.note ? `<div class="note-text">${data.note}</div>` : '';
+            
+            // 버튼 라벨 커스텀 (Q3 같은 경우 대응)
+            const yesLabel = data.yesLabel ? data.yesLabel : '예';
+            const noLabel = data.noLabel ? data.noLabel : '아니오';
+
+            card.innerHTML = `
+                <div class="question-text">Q. ${data.text}</div>
+                ${noteHtml}
+                <div class="btn-group">
+                    <button class="btn-yes" onclick="nextStep('${data.yes}')">${yesLabel}</button>
+                    <button class="btn-no" onclick="nextStep('${data.no}')">${noLabel}</button>
+                </div>
+            `;
+            questionContainer.appendChild(card);
+            
+            progressBar.style.width = `${progress}%`;
+            
+            // 첫 질문이면 이전 버튼 숨김
+            if (historyStack.length === 0) {
+                prevBtn.style.display = 'none';
+            } else {
+                prevBtn.style.display = 'block';
+            }
+        }
+    }
+
+    function nextStep(nextId) {
+        historyStack.push(currentId);
+        renderStep(nextId);
+    }
+
+    function goBack() {
+        if (historyStack.length > 0) {
+            const prevId = historyStack.pop();
+            renderStep(prevId);
+        }
+    }
+
+    function renderResult(resultId) {
+        const res = results[resultId];
+        const resClass = res.type === 'success' ? 'result-success' : 'result-fail';
+        
+        const div = document.createElement('div');
+        div.className = `result-box ${resClass} question-card active`;
+        div.innerHTML = `
+            <div class="result-title">${res.title}</div>
+            <div class="result-desc">${res.desc}</div>
+            <button class="btn-restart" onclick="location.reload()">처음으로 돌아가기</button>
+        `;
+        questionContainer.appendChild(div);
+    }
+
+    // 실행
+    init();
+
+</script>
+</body>
+</html>
